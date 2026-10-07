@@ -1,0 +1,437 @@
+###Set your working directory before starting
+setwd("C:/Users/bhutc/Documents/R/IBI/")
+
+#########Need 32 bit version of R###############
+## Go to Tools/Global Options and select the 32 version of R
+
+library(plyr)
+library(reshape2)
+library(RODBC)
+library(dplyr)
+library(car)
+library(ggplot2)
+
+library(tcltk)
+library(sp)
+
+# data processing
+library(foreign) # for reading dbfs
+library(plyr)
+library(reshape2)
+library(dplyr)
+library(magrittr)
+library(tidyr) 
+library(ggplot2)
+library(gridExtra) # to arrange grid plots
+
+
+# If loading a table of stations (csv) with STR_STATION_ID
+
+mystations <- read.csv(file="data/2026/CIMbugs2026.csv",header=TRUE)
+SLIMS_DBA_MI_BUG_CODES_LUT <- read.csv(file="data/SLIMS_DBA_MI_BUG_CODES_LUT.csv", header=TRUE)
+
+mystations <- merge(mystations,SLIMS_DBA_MI_BUG_CODES_LUT[ , c("STR_ID_LEVEL", "INT_BUG_CODE", "INT_HILS_ID_LEVEL",
+                                                               "STR_TROPHIC_ID_LEVEL", "INT_BCG_WARM", "INT_BCG_COLD", "STR_TAXA_NAME")], by="STR_TAXA_NAME")
+
+
+###Metrics based on Taxa (percents)
+mystations$gen [mystations$INT_BUG_CODE == 1020400300] <- "BAETIS"
+mystations$gen [mystations$INT_BUG_CODE == 1101301000] <- "STENELMIS"
+mystations$gen [mystations$INT_BUG_CODE == 1101300600] <- "OPTIOSERVUS"
+mystations$gen [mystations$INT_BUG_CODE == 1122100400] <- "PROSIM"
+mystations$gen [mystations$INT_BUG_CODE == 1020800300] <- "EPHMRLA"
+mystations$gen [mystations$INT_BUG_CODE == 1080400600|mystations$INT_BUG_CODE == 1080400700] <-"HCSYCH"
+mystations$gen [mystations$INT_BUG_CODE == 1040400100|mystations$INT_BUG_CODE == 1040500200] <-"LEUCAMP"
+
+mystations$phy [mystations$INT_BUG_CODE == 16000000000] <- "NEMATOM"               
+mystations$phy [mystations$INT_BUG_CODE == 14000000000] <- "BRYOZOA"
+mystations$phy [mystations$INT_BUG_CODE >= 4999999999 & mystations$INT_BUG_CODE < 5999999999] <- "NEMERTE"
+mystations$phy [mystations$INT_BUG_CODE >= 5999999999 & mystations$INT_BUG_CODE< 7999999999] <- "NEMATA"
+mystations$phy [mystations$INT_BUG_CODE >= 13000000000 & mystations$INT_BUG_CODE < 13999999999] <- "CRUSTAC"
+
+mystations$class [mystations$INT_BUG_CODE >= 10000000000 & mystations$INT_BUG_CODE < 10999999999] <- "HIRUDIN"
+mystations$class [mystations$INT_BUG_CODE >= 11000000000 & mystations$INT_BUG_CODE < 11999999999] <- "OLIGCHT"
+mystations$class [mystations$INT_BUG_CODE >= 12000000000 & mystations$INT_BUG_CODE < 12999999999] <- "POLYCHT"
+mystations$class [mystations$INT_BUG_CODE >= 8000000000 & mystations$INT_BUG_CODE < 8999999999] <- "GASTROP"           
+mystations$ord [mystations$INT_BUG_CODE >= 1030000000 & mystations$INT_BUG_CODE <= 1039999999] <- "ODONATA"
+mystations$ord [mystations$INT_BUG_CODE >= 1060000000 & mystations$INT_BUG_CODE <= 1069999999] <- "MEGALOP"
+mystations$ord [mystations$INT_BUG_CODE >= 13030000000 & mystations$INT_BUG_CODE <= 13039999999] <- "AMPHPOD"
+mystations$ord  [mystations$INT_BUG_CODE >= 13040000000 & mystations$INT_BUG_CODE <= 13049999999] <- "DECAPOD"
+mystations$ord [mystations$INT_BUG_CODE >= 13050000000 & mystations$INT_BUG_CODE <=13059999999] <- "ISOPODA"
+
+mystations$ord [mystations$INT_BUG_CODE==15000000000] <- "SPIDERS"
+
+mystations$fam [mystations$INT_BUG_CODE >= 1122200000 & mystations$INT_BUG_CODE < 1122220000] <- "CHIROS"
+mystations$fam [mystations$INT_BUG_CODE >= 13030200000 & mystations$INT_BUG_CODE <= 13030200100] <- "GAMM" 
+mystations$fam [mystations$INT_BUG_CODE >= 1122100000 & mystations$INT_BUG_CODE <= 1122100700] <- "SIMULID"
+mystations$fam [mystations$INT_BUG_CODE >= 1040600000 & mystations$INT_BUG_CODE <= 1040600600] <- "CAPNIID"
+mystations$fam [mystations$INT_BUG_CODE >= 1040300000 & mystations$INT_BUG_CODE <= 1040300500] <- "TAENIOP"
+mystations$fam [mystations$INT_BUG_CODE >= 1101000000 & mystations$INT_BUG_CODE < 1101099999] <- "PSEPHEN"  
+mystations$fam [mystations$INT_BUG_CODE >= 9020200000 & mystations$INT_BUG_CODE < 9020299999] <- "CORBICU"
+
+mystations$class [mystations$INT_BUG_CODE >= 9000000000 & mystations$INT_BUG_CODE < 9999999999] <- "BIVALV"            
+mystations$class [mystations$INT_BUG_CODE >= 4000000000 & mystations$INT_BUG_CODE < 4999999999] <- "TURBELL"           
+
+mystations$nonin [mystations$INT_BUG_CODE >= 2000000000] <- "NONINSC"
+
+mystations$tol [mystations$INT_BUG_CODE >= 1080400000 & mystations$INT_BUG_CODE <= 1080499999 & mystations$INT_BCG_WARM >= 4]<-"HSYCtol"
+mystations$tol [mystations$INT_BUG_CODE >= 1120000000 & mystations$INT_BUG_CODE <= 1129999999 & mystations$INT_BCG_WARM <= 3] <- "DIPTsen"
+mystations$tol [mystations$INT_BUG_CODE >= 1120000000 & mystations$INT_BUG_CODE <= 1129999999 & mystations$INT_BCG_WARM >= 4] <- "DIPTtol"
+
+taxa_pcts <- ddply(mystations,c('INT_MI_SURVEY_GEN_ID'),mutate,TOTLIND=sum(TAXA_SUM))
+taxa_pcts <- subset(taxa_pcts,select=c('INT_MI_SURVEY_GEN_ID','TAXA_SUM','TOTLIND','ord','fam','gen','phy','class','nonin','tol'))
+
+
+###Warning messages are expected after running this loop, they are resolved when all NA columns are removed)
+
+result_taxa<-unique(taxa_pcts[c(1)])
+for(i in 4:ncol(taxa_pcts)){
+  taxa_loop <- taxa_pcts[c(1:3,i)]
+  
+  taxa_loop$Parameter <- taxa_loop[,4]
+  single_taxa <- ddply(taxa_loop,c('INT_MI_SURVEY_GEN_ID','Parameter'),mutate,PCT=sum(TAXA_SUM)/(TOTLIND)*100)
+  single.long_taxa <- melt(single_taxa,id.vars=c('INT_MI_SURVEY_GEN_ID','Parameter'),measure.vars=c('PCT'))
+  single.long_taxa <- mutate(single.long_taxa,metname=paste(Parameter,variable,sep='_'))
+  single.wide_taxa <- dcast(single.long_taxa,INT_MI_SURVEY_GEN_ID~metname,value.var='value',fun.aggregate = mean,subset=.(Parameter!="NA")) 
+  single.wide_taxa[is.na(single.wide_taxa)] <- 0 
+  result_taxa<-merge(result_taxa,single.wide_taxa,by='INT_MI_SURVEY_GEN_ID',all=TRUE)
+}                              
+
+
+result_taxa[is.na(result_taxa)]<-0
+taxa_pct_final<-result_taxa[, grep("^(NA)", names(result_taxa), value = TRUE, invert = TRUE)]
+
+#Some less common metrics get dropped and need to be added back in
+#This code adds the field with a "0" if the field does not exist in the table. Otherwise, it leaves the field alone.
+fncols <- function(data, cname) {
+  add <-cname[!cname%in%names(data)]
+  
+  if(length(add)!=0) data[add] <- 0
+  data
+}
+taxa_pct_final<- fncols(taxa_pct_final, c("GAMM_PCT","ISOPODA_PCT","AMPHPOD_PCT", 
+                                          "MEGALOP_PCT", "OLIGCHT_PCT" , "CRUSTAC_PCT",
+                                          "BIVALV_PCT"))
+
+#########Taxa Metrics to include richness, percents, and proportions
+mystations$eptde <- NA
+mystations$eptde [mystations$INT_BUG_CODE >1019999999& mystations$INT_BUG_CODE <1021600201] <- "Emay"
+mystations$eptde [mystations$INT_BUG_CODE >1039999999& mystations$INT_BUG_CODE <1040900601] <- "Pstone"
+mystations$eptde [mystations$INT_BUG_CODE >1079999999& mystations$INT_BUG_CODE <1081800001] <- "Tcadd"
+mystations$eptde [mystations$INT_BUG_CODE >= 1120000000 & mystations$INT_BUG_CODE <= 1129999999] <- "DIPTERA"
+mystations$eptde [mystations$INT_BUG_CODE >= 1101300000 & mystations$INT_BUG_CODE < 1101399999] <- "ELMID"
+
+mystations$met1 [mystations$INT_HILS_ID_LEVEL >= 0 & mystations$INT_HILS_ID_LEVEL  <= 5] <- "PTV05"
+mystations$met2 [mystations$INT_HILS_ID_LEVEL >= 0 & mystations$INT_HILS_ID_LEVEL <= 4] <- "PTV04"
+mystations$met3 [mystations$INT_HILS_ID_LEVEL >= 0 & mystations$INT_HILS_ID_LEVEL  <= 3] <- "PTV03"
+mystations$met4 [mystations$INT_HILS_ID_LEVEL >= 0 & mystations$INT_HILS_ID_LEVEL <= 2] <- "PTV02"
+mystations$met5 [mystations$INT_HILS_ID_LEVEL >= 5 & mystations$INT_HILS_ID_LEVEL <= 10] <- "PTV510"
+mystations$met6 [mystations$INT_HILS_ID_LEVEL >= 6 & mystations$INT_HILS_ID_LEVEL  <= 10] <- "PTV610"
+mystations$met7 [mystations$INT_HILS_ID_LEVEL >= 7 & mystations$INT_HILS_ID_LEVEL  <= 10] <- "PTV710"
+mystations$met8 [mystations$INT_HILS_ID_LEVEL >= 8 & mystations$INT_HILS_ID_LEVEL  <= 10] <- "PTV810"
+
+
+##########################
+mystations$met9<- ifelse(mystations$eptde=="Emay"& mystations$met2=="PTV04","Eptv04",0)
+mystations$met10<- ifelse(mystations$eptde=="Tcadd"& mystations$met2=="PTV04","Tptv04",0)
+mystations$met11<- ifelse(mystations$eptde=="Emay"& mystations$INT_BCG_WARM< 4&mystations$INT_BCG_WARM>0,"Ebcg13","NA")
+mystations$met12<- ifelse(mystations$eptde=="Tcadd"& mystations$INT_BCG_WARM< 4&mystations$INT_BCG_WARM>0,"Tbcg13","NA")
+mystations$met13<- ifelse((mystations$eptde=="Tcadd"|mystations$eptde=="Emay"|mystations$eptde=="Pstone") & mystations$INT_BCG_WARM< 4&mystations$INT_BCG_WARM>0,"EPTbcg","NA")
+mystations$met14<- ifelse((mystations$eptde=="Tcadd"|mystations$eptde=="Emay") & mystations$met2=="PTV04"|mystations$eptde=="Pstone","EPTptv","NA")
+mystations$met15<- ifelse(mystations$eptde=="Tcadd"|mystations$eptde=="Emay"|mystations$eptde=="Pstone","EPT","NA")
+mystations$met16 <- ifelse(mystations$INT_BCG_WARM=="1"|mystations$INT_BCG_WARM=="2"|mystations$INT_BCG_WARM=="3","BCG123","NA")
+mystations$met17 <- ifelse(mystations$INT_BCG_WARM=="4"|mystations$INT_BCG_WARM=="5"|mystations$INT_BCG_WARM=="6","BCG456","NA")
+mystations$met18 <- ifelse(mystations$INT_BUG_CODE >= 1101300000 & mystations$INT_BUG_CODE <= 1101399999 & mystations$INT_BCG_WARM >= 4,"ELMDtol","NA")
+
+
+##########################
+mystations$met19 <- ifelse(mystations$STR_TROPHIC_ID_LEVEL== "SH", "SH", NA)
+mystations$met20 <- ifelse(mystations$STR_TROPHIC_ID_LEVEL== "SC", "SC", NA)
+mystations$met21 <- ifelse(mystations$STR_TROPHIC_ID_LEVEL== "PR", "PR", NA)
+mystations$met22 <- ifelse(mystations$STR_TROPHIC_ID_LEVEL== "FC", "FC", NA)
+mystations$met23 <- ifelse(mystations$STR_TROPHIC_ID_LEVEL== "CG", "CG", NA)
+
+
+#######This generates the general metric table#############
+met.1<- ddply(mystations,c('INT_MI_SURVEY_GEN_ID'),mutate,TOTLIND=sum(TAXA_SUM),TAXRICH=length(INT_BUG_CODE))
+met.2 <-ddply(met.1,c('INT_MI_SURVEY_GEN_ID'),mutate,HILS=sum((TAXA_SUM*INT_HILS_ID_LEVEL)/TOTLIND,na.rm=TRUE))
+met.3<- ddply(met.2,c('INT_MI_SURVEY_GEN_ID'),mutate,SHANdivers= - sum((TAXA_SUM/TOTLIND)*log(TAXA_SUM/TOTLIND)))
+met.4 <- ddply (met.3,c('INT_MI_SURVEY_GEN_ID'),mutate,pctDOM= ((max(TAXA_SUM))/TOTLIND)*100)
+met.5 <- ddply (met.4,c('INT_MI_SURVEY_GEN_ID','STR_TROPHIC_ID_LEVEL'),mutate,FFGshannon_1 = sum(TAXA_SUM)/TOTLIND,FFGshannon_2=log(FFGshannon_1),
+                FFGshannon_3=FFGshannon_1*FFGshannon_2)
+met.5a_long<-melt(met.5,id.vars=c('INT_MI_SURVEY_GEN_ID','STR_TROPHIC_ID_LEVEL'),measure.vars=c('FFGshannon_3'))
+met.5a_wide <- dcast(met.5a_long,INT_MI_SURVEY_GEN_ID~STR_TROPHIC_ID_LEVEL,value.var='value',fun.aggregate = mean)
+met.5a_wide[is.na(met.5a_wide)] <- 0
+
+met.5a_wide$FFGshannon <- apply(met.5a_wide[, 2:ncol(met.5a_wide)], 1, sum)
+met.5a_wide$FFGshannon <- met.5a_wide$FFGshannon*-1
+met5.long <- melt(met.5,id.vars=c('INT_MI_SURVEY_GEN_ID'),measure.vars=c('TOTLIND','TAXRICH','HILS','SHANdivers','pctDOM'))
+met5.wide <- dcast(met5.long,INT_MI_SURVEY_GEN_ID~variable,value.var='value',fun.aggregate = mean) 
+met.6<-merge(met5.wide,met.5a_wide[ , c("INT_MI_SURVEY_GEN_ID", "FFGshannon")],by='INT_MI_SURVEY_GEN_ID')
+
+
+#######################################################
+met.sub <- subset(met.2, INT_BCG_WARM>0, select=c('INT_MI_SURVEY_GEN_ID','INT_BUG_CODE','TAXA_SUM','INT_BCG_WARM'))
+met.sub1 <- ddply(met.sub,c('INT_MI_SURVEY_GEN_ID'),mutate,BCGindex1=sum(TAXA_SUM*INT_BCG_WARM)/sum(TAXA_SUM))
+met.sub_large <- subset(met.2, INT_BCG_WARM>0, select=c('INT_MI_SURVEY_GEN_ID','INT_BUG_CODE','TAXA_SUM','INT_BCG_WARM'))
+met.sub1_large <- ddply(met.sub_large,c('INT_MI_SURVEY_GEN_ID'),mutate,BCGindex2=sum(TAXA_SUM*INT_BCG_WARM)/sum(TAXA_SUM))
+met.f<- merge (met.sub1_large,met.sub1,by='INT_MI_SURVEY_GEN_ID')
+met.bcg <-subset(met.f, select=c('INT_MI_SURVEY_GEN_ID','BCGindex1','BCGindex2'))
+met.bcg <-unique(met.bcg)
+final_met <- merge(met.6,met.bcg,by.x='INT_MI_SURVEY_GEN_ID',all = TRUE)
+
+
+
+######Prepares datatset for EPT (pct,rich,prop) metrics for loop code################
+
+metr <- subset(met.1,select=c('INT_MI_SURVEY_GEN_ID','INT_BUG_CODE','TAXA_SUM','TOTLIND','TAXRICH','INT_HILS_ID_LEVEL','INT_BCG_WARM','STR_TROPHIC_ID_LEVEL',
+                              'eptde','met1','met2','met3','met4','met5','met6','met7','met8','met9','met10','met11','met12','met13','met14','met15','met16',
+                              'met17','met18', 'met19', 'met20','met21','met22','met23'))
+
+
+###############################################################################################
+metr$INT_BCG_WARM_1 <- paste("BCG",metr$INT_BCG_WARM,sep='_')
+metr$PTV_1 <- paste("PTV",metr$INT_HILS_ID_LEVEL,sep='_')
+########################################################################
+
+
+####warning messages expected after running this loop
+result<-unique(metr[c(1)])
+for(i in 9:ncol(metr)){
+  inLong <- metr[c(1:8,i)]
+  
+  inLong$Parameter <- inLong[,9]
+  single <- ddply(inLong,c('INT_MI_SURVEY_GEN_ID','Parameter'),mutate,RICH=length(INT_BUG_CODE),PROP=RICH/(TAXRICH),
+                  PCT=sum(TAXA_SUM)/(TOTLIND)*100)
+  single.long <- melt(single,id.vars=c('INT_MI_SURVEY_GEN_ID','Parameter'),measure.vars=c('RICH','PROP','PCT'))
+  single.long <- mutate(single.long,metname=paste(Parameter,variable,sep='_'))
+  single.wide <- dcast(single.long,INT_MI_SURVEY_GEN_ID~metname,value.var='value',fun.aggregate = mean,subset=.(Parameter!="NA")) 
+  single.wide[is.na(single.wide)] <- 0 
+  result<-merge(result,single.wide,by='INT_MI_SURVEY_GEN_ID',all=TRUE)
+}
+
+
+###################################
+
+result[is.na(result)]<-0
+taxa2_result<-result[, grep("^(NA)", names(result), value = TRUE, invert = TRUE)]
+result_final<-taxa2_result[, grep("^(0)", names(taxa2_result),value = TRUE, invert = TRUE)]
+
+
+#This code adds the field with a "0" if the field does not exist in the table. Otherwise, it leaves the field alone.
+
+result_final<- fncols(result_final, c("PTV710_PCT","PTV710_PROP","PTV710_RICH", 
+                                      "PTV_0_RICH", "PTV_1_RICH" , "PTV_2_RICH",
+                                      "BCG_1_RICH", "BCG_2_RICH", "BCG_3_RICH", "FC_RICH", "PR_RICH", 
+                                      "SH_RICH"))
+
+
+
+#############################
+attach(result_final)
+result_final$PTVbeck2<-(2*PTV_0_RICH)+(1*PTV_1_RICH)
+result_final$PTVbeck3<-(3*PTV_0_RICH)+(2*PTV_1_RICH)+(1*PTV_2_RICH)
+result_final$PTVbeck4<-(2*(PTV_0_RICH+PTV_1_RICH))+(1*(PTV_2_RICH+PTV_3_RICH+PTV_4_RICH))
+result_final$BCGbeck5 <- (2*BCG_1_RICH)+(1*BCG_2_RICH)
+result_final$BCGbeck6 <- (3*BCG_1_RICH)+(2*BCG_2_RICH)+(1*BCG_3_RICH)
+result_final$BCGrichRAT <- BCG123_RICH/BCG456_RICH
+result_final$BCGpctRAT <- BCG123_PCT/BCG456_PCT
+result_final$BCGpropRAT <- BCG123_PROP/BCG456_PROP
+result_final$FCPRSHrich <- FC_RICH+PR_RICH+SH_RICH 
+
+final_1<- merge(final_met, result_final, by = "INT_MI_SURVEY_GEN_ID", all.x=TRUE)
+final_2<- merge(final_1,taxa_pct_final, by = "INT_MI_SURVEY_GEN_ID", all.x=TRUE)
+
+## Remove NA's ##
+
+final_2[is.na(final_2)]<-0
+
+
+########Write the metrics table to workspace, for the purpose of metric evaluation and future MMI development.
+
+mystations_metrics <- merge(mystations[ , c( "STR_STATION_ID","INT_MI_SURVEY_GEN_ID")], 
+                            final_2, by='INT_MI_SURVEY_GEN_ID')
+
+mystations_metrics <- mystations_metrics[!duplicated(mystations_metrics$INT_MI_SURVEY_GEN_ID),]
+
+write.csv(mystations_metrics, file = "data/mystations_metrics.csv", 
+          row.names = FALSE)
+
+
+#Remove tables that are not needed
+rm(met.1, met.2, met.3, met.4, met.5, met.6, final_1, final_2, final_met, inLong, met.5a_long, met.5a_wide, met.bcg, met.sub, met.sub1, 
+   met.sub_large, met.sub1_large, met.f, met5.long, met5.wide, metr, result, result_final, result_taxa, single, single.long, single.long_taxa,
+   single.wide, single.wide_taxa, single_taxa, taxa_loop, taxa_pct_final, taxa_pcts, taxa2_result)
+
+
+###########This generates standardized metrics and MMI calculations.
+
+metrics <- subset(mystations_metrics,select=c("STR_STATION_ID", 'INT_MI_SURVEY_GEN_ID','TAXRICH','Emay_RICH',
+                                              'Tptv04_RICH','EPT_RICH','EPTptv_RICH','Emay_PCT','Eptv04_PCT',
+                                              'Tcadd_PCT', "Tcadd_RICH", 'BCGrichRAT','BCGpctRAT','PTV03_PCT','PTV710_PCT', 'PTV05_PCT',
+                                              'HILS','PTVbeck3','PTVbeck4','FCPRSHrich','SHANdivers','pctDOM', 'TOTLIND', "Ebcg13_PCT", 
+                                              "BCG_5_PCT", "EPTbcg_PCT", "BCGindex2", "EPTbcg_RICH", "SC_RICH"))
+
+#### Standardize and calculate the Small Freestone IBI 
+#Standardize
+metrics$TAXARICH_std_Freestonesmall <-100*(metrics$TAXRICH/33)
+metrics$TAXARICH_Adj_Freestonesmall <- ifelse(metrics$TAXARICH_std_Freestonesmall>100,100,metrics$TAXARICH_std_Freestonesmall*1)
+
+metrics$EPTptv_RICH_std_Freestonesmall <-100*(metrics$EPTptv_RICH/19)
+metrics$EPTptv_RICH_Adj_Freestonesmall <- ifelse(metrics$EPTptv_RICH_std_Freestonesmall>100,100,metrics$EPTptv_RICH_std_Freestonesmall*1)
+
+metrics$PTVbeck3_std_Freestonesmall <- 100*(metrics$PTVbeck3/38)
+metrics$PTVbeck3_Adj_Freestonesmall <- ifelse(metrics$PTVbeck3_std_Freestonesmall>100,100,metrics$PTVbeck3_std_Freestonesmall*1)
+
+metrics$HBI_std_Freestonesmall <-100*((10-metrics$HILS)/8.11)
+metrics$HBI_Adj_Freestonesmall <- ifelse(metrics$HBI_std_Freestonesmall>100,100,metrics$HBI_std_Freestonesmall*1)
+
+metrics$Shan_Div_std_Freestonesmall <-100*(metrics$SHANdivers/2.86)
+metrics$Shan_Div_Adj_Freestonesmall <- ifelse(metrics$Shan_Div_std_Freestonesmall>100,100,metrics$Shan_Div_std_Freestonesmall*1)
+
+metrics$PTV03_PCT_std_Freestonesmall <-100*(metrics$PTV03_PCT/84.5)
+metrics$PTV03_PCT_Adj_Freestonesmall <- ifelse(metrics$PTV03_PCT_std_Freestonesmall>100,100,metrics$PTV03_PCT_std_Freestonesmall*1)
+
+#Calcluate
+metrics$SmallFreestoneIBI <-(metrics$TAXARICH_Adj_Freestonesmall+metrics$EPTptv_RICH_Adj_Freestonesmall+metrics$PTVbeck3_Adj_Freestonesmall
+                             +metrics$HBI_Adj_Freestonesmall+metrics$Shan_Div_Adj_Freestonesmall+metrics$PTV03_PCT_Adj_Freestonesmall)/6
+
+#### Standardize and calculate the Large Freestone IBI
+#Standardize
+metrics$TAXARICH_std_Freestonelarge <-100*(metrics$TAXRICH/31)
+metrics$TAXARICH_Adj_Freestonelarge <- ifelse(metrics$TAXARICH_std_Freestonelarge>100,100,metrics$TAXARICH_std_Freestonelarge*1)
+
+metrics$EPTptv_RICH_std_Freestonelarge <-100*(metrics$EPTptv_RICH/16)
+metrics$EPTptv_RICH_Adj_Freestonelarge <- ifelse(metrics$EPTptv_RICH_std_Freestonelarge>100,100,metrics$EPTptv_RICH_std_Freestonelarge*1)
+
+metrics$PTVbeck3_std_Freestonelarge <-100*(metrics$PTVbeck3/22)
+metrics$PTVbeck3_Adj_Freestonelarge <- ifelse(metrics$PTVbeck3_std_Freestonelarge>100,100,metrics$PTVbeck3_std_Freestonelarge*1)
+
+metrics$HBI_std_Freestonelarge <-100*((10-metrics$HILS)/6.95)
+metrics$HBI_Adj_Freestonelarge <- ifelse(metrics$HBI_std_Freestonelarge>100,100,metrics$HBI_std_Freestonelarge*1)
+
+metrics$Shan_Div_std_Freestonelarge <-100*(metrics$SHANdivers/2.86)
+metrics$Shan_Div_Adj_Freestonelarge <- ifelse(metrics$Shan_Div_std_Freestonelarge>100,100,metrics$Shan_Div_std_Freestonelarge*1)
+
+metrics$PTV03_PCT_std_Freestonelarge <-100*(metrics$PTV03_PCT/66.7)
+metrics$PTV03_PCT_Adj_Freestonelarge <- ifelse(metrics$PTV03_PCT_std_Freestonelarge>100,100,metrics$PTV03_PCT_std_Freestonelarge*1)
+
+#Calculate
+metrics$LargeFreestoneIBI <-(metrics$TAXARICH_Adj_Freestonelarge+metrics$EPTptv_RICH_Adj_Freestonelarge+metrics$PTVbeck3_Adj_Freestonelarge+metrics$HBI_Adj_Freestonelarge+
+                               metrics$Shan_Div_Adj_Freestonelarge+metrics$PTV03_PCT_Adj_Freestonelarge)/6
+
+#### Standardize and calcuate the Summer SWMMI
+#Standardize
+metrics$BCG_5_PCT_std_SummerSWMMI <-  (80.558369 - metrics$BCG_5_PCT)/(80.558369 - 28.510358)*100
+metrics$BCG_5_PCT_Adj_SummerSWMMI <-  ifelse (metrics$BCG_5_PCT_std_SummerSWMMI > 100, 100, 
+                                              ifelse(metrics$BCG_5_PCT_std_SummerSWMMI < 0, 0.00,metrics$BCG_5_PCT_std_SummerSWMMI))
+metrics$PTV03_PCT_std_SummerSWMMI <-  (metrics$PTV03_PCT - 2.300991)/ (50.608292 - 2.300991)*100
+metrics$PTV03_PCT_Adj_SummerSWMMI <-  ifelse (metrics$PTV03_PCT_std_SummerSWMMI > 100, 100, 
+                                              ifelse(metrics$PTV03_PCT_std_SummerSWMMI < 0, 0.00,metrics$PTV03_PCT_std_SummerSWMMI))
+metrics$BCGindex2_std_SummerSWMMI <-  (4.763326 - metrics$BCGindex2)/(4.763326 - 3.755997)*100
+metrics$BCGindex2_Adj_SummerSWMMI <-  ifelse (metrics$BCGindex2_std_SummerSWMMI > 100, 100,
+                                              ifelse(metrics$BCGindex2_std_SummerSWMMI < 0, 0.00, metrics$BCGindex2_std_SummerSWMMI))
+metrics$pctDOM_std_SummerSWMMI <-  (46.769985 - metrics$pctDOM)/(46.769985 - 14.413081)*100
+metrics$pctDOM_Adj_SummerSWMMI <-  ifelse (metrics$pctDOM_std_SummerSWMMI > 100, 100, 
+                                           ifelse(metrics$pctDOM_std_SummerSWMMI < 0, 0.00,metrics$pctDOM_std_SummerSWMMI))
+metrics$Ebcg13_PCT_std_SummerSWMMI <-  (metrics$Ebcg13_PCT-0.371179)/(49.707926 - 0.371179)*100
+metrics$Ebcg13_PCT_Adj_SummerSWMMI <-  ifelse (metrics$Ebcg13_PCT_std_SummerSWMMI > 100, 100,
+                                               ifelse(metrics$Ebcg13_PCT_std_SummerSWMMI < 0, 0.00, metrics$Ebcg13_PCT_std_SummerSWMMI))
+metrics$EPTbcg_RICH_std_SummerSWMMI <-  (metrics$EPTbcg_RICH - 1.0000000)/(10.000000 - 1.0000000)*100
+metrics$EPTbcg_RICH_Adj_SummerSWMMI <-  ifelse (metrics$EPTbcg_RICH_std_SummerSWMMI > 100, 100,
+                                                ifelse(metrics$EPTbcg_RICH_std_SummerSWMMI < 0, 0.00,metrics$EPTbcg_RICH_std_SummerSWMMI))
+
+#Calcuate
+metrics$SummerSWMMI <- ((metrics$BCG_5_PCT_Adj_SummerSWMMI + metrics$PTV03_PCT_Adj_SummerSWMMI  + metrics$BCGindex2_Adj_SummerSWMMI +
+                           metrics$pctDOM_Adj_SummerSWMMI + metrics$Ebcg13_PCT_Adj_SummerSWMMI + metrics$EPTbcg_RICH_Adj_SummerSWMMI)/6)
+
+
+#### Standardize and calcuate the Fall SWMMI
+#Standardize
+metrics$PTVbeck3_std_FallSWMMI <-  (metrics$PTVbeck3 - 2.0000)/(15.00000 - 2.0000)*100
+metrics$PTVbeck3_Adj_FallSWMMI <-  ifelse (metrics$PTVbeck3_std_FallSWMMI > 100, 100, 
+                                           ifelse (metrics$PTVbeck3_std_FallSWMMI < 0, 0.00, metrics$PTVbeck3_std_FallSWMMI))
+
+metrics$EPTptv_RICH_std_FallSWMMI <-  (metrics$EPTptv_RICH - 2.00000)/(15 - 2.00000)*100
+metrics$EPTptv_RICH_Adj_FallSWMMI <-  ifelse (metrics$EPTptv_RICH_std_FallSWMMI > 100, 100, 
+                                              ifelse (metrics$EPTptv_RICH_std_FallSWMMI < 0, 0.00, metrics$EPTptv_RICH_std_FallSWMMI))
+
+metrics$PTV03_PCT_std_FallSWMMI <-  (metrics$PTV03_PCT - 3.339518)/(65.28991 - 3.339518)*100
+metrics$PTV03_PCT_Adj_FallSWMMI <-  ifelse (metrics$PTV03_PCT_std_FallSWMMI > 100, 100, 
+                                            ifelse (metrics$PTV03_PCT_std_FallSWMMI < 0, 0.00, metrics$PTV03_PCT_std_FallSWMMI))
+
+metrics$Ebcg13_PCT_std_FallSWMMI <-  (metrics$Ebcg13_PCT - 0.000000)/(62.35088 - 0.000000)*100
+metrics$Ebcg13_PCT_Adj_FallSWMMI <-  ifelse (metrics$Ebcg13_PCT_std_FallSWMMI > 100, 100, 
+                                             ifelse (metrics$Ebcg13_PCT_std_FallSWMMI < 0, 0.00, metrics$Ebcg13_PCT_std_FallSWMMI))
+
+metrics$TAXARICH_std_FallSWMMI <-  (metrics$TAXRICH - 11.000000)/(27.00000 - 11.000000)*100
+metrics$TAXARICH_Adj_FallSWMMI <-  ifelse (metrics$TAXARICH_std_FallSWMMI > 100, 100, 
+                                           ifelse (metrics$TAXARICH_std_FallSWMMI < 0, 0.00, metrics$TAXARICH_std_FallSWMMI))
+
+metrics$SC_RICH_std_FallSWMMI <-  (metrics$SC_RICH - 2)/(10 - 2)*100
+metrics$SC_RICH_Adj_FallSWMMI <-  ifelse (metrics$SC_RICH_std_FallSWMMI > 100, 100, 
+                                          ifelse (metrics$SC_RICH_std_FallSWMMI < 0, 0.00, metrics$SC_RICH_std_FallSWMMI))
+
+#Calcuate
+metrics$FallSWMMI <- ((metrics$PTVbeck3_Adj_FallSWMMI + metrics$EPTptv_RICH_Adj_FallSWMMI  + metrics$PTV03_PCT_Adj_FallSWMMI +
+                         metrics$Ebcg13_PCT_Adj_FallSWMMI + metrics$TAXARICH_Adj_FallSWMMI + metrics$SC_RICH_Adj_FallSWMMI)/6)
+
+
+#### Standardize and calcuate the Multihabitat IBI
+#Standardize
+
+metrics$EPT_RICH_std_Multihabitat <-100*(metrics$EPT_RICH/17)
+metrics$EPT_RICH_Adj_Multihabitat <- ifelse(metrics$EPT_RICH_std_Multihabitat>100,100,metrics$EPT_RICH_std_Multihabitat*1)
+
+metrics$TAXARICH_std_Multihabitat <-100*(metrics$TAXRICH/31)
+metrics$TAXARICH_Adj_Multihabitat <- ifelse(metrics$TAXARICH_std_Multihabitat>100,100,metrics$TAXARICH_std_Multihabitat*1)
+
+metrics$PTVbeck4_std_Multihabitat <- 100*(metrics$PTVbeck4/22)
+metrics$PTVbeck4_Adj_Multihabitat <- ifelse(metrics$PTVbeck4_std_Multihabitat>100,100,metrics$PTVbeck4_std_Multihabitat*1)
+
+metrics$SHANdivers_std_Multihabitat <-100*(metrics$SHANdivers/2.43)
+metrics$SHANdivers_Adj_Multihabitat <- ifelse(metrics$SHANdivers_std_Multihabitat>100,100,metrics$SHANdivers_std_Multihabitat*1)
+
+
+metrics$Tcadd_RICH_std_Multihabitat <-100*(metrics$Tcadd_RICH/11)
+metrics$Tcadd_RICH_Adj_Multihabitat <- ifelse(metrics$Tcadd_RICH_std_Multihabitat>100,100,metrics$Tcadd_RICH_std_Multihabitat*1)
+
+metrics$Emay_RICH_std_Multihabitat <-100*(metrics$Emay_RICH/6)
+metrics$Emay_RICH_Adj_Multihabitat <- ifelse(metrics$Emay_RICH_std_Multihabitat>100,100,metrics$Emay_RICH_std_Multihabitat*1)
+
+#Calcuate
+metrics$MultihabitatIBI <- ((metrics$EPT_RICH_Adj_Multihabitat + metrics$TAXARICH_Adj_Multihabitat  + metrics$PTVbeck4_Adj_Multihabitat +
+                               metrics$SHANdivers_Adj_Multihabitat + metrics$Tcadd_RICH_Adj_Multihabitat + metrics$Emay_RICH_Adj_Multihabitat)/6)
+
+
+#### Standardize and calcuate the Limestone IBI
+#Standardize
+
+metrics$TAXARICH_std_Limestone <- 100*(metrics$TAXRICH/18)
+metrics$TAXARICH_Adj_Limestone <- ifelse(metrics$TAXARICH_std_Limestone>100,100,metrics$TAXARICH_std_Limestone*1)
+
+metrics$EPT_RICH_std_Limestone <-100*(metrics$EPT_RICH/8)
+metrics$EPT_RICH_Adj_Limestone <- ifelse(metrics$EPT_RICH_std_Limestone>100,100,metrics$EPT_RICH_std_Limestone*1)
+
+metrics$PTVbeck4_std_Limestone <- 100*(metrics$PTVbeck4/12)
+metrics$PTVbeck4_Adj_Limestone <- ifelse(metrics$PTVbeck4_std_Limestone>100,100,metrics$PTVbeck4_std_Limestone*1)
+
+metrics$HBI_std_Limestone <- 100*((10-metrics$HILS)/(10-3.84))
+metrics$HBI_Adj_Limestone <- ifelse(metrics$HBI_std_Limestone>100,100,metrics$HBI_std_Limestone*1)
+
+metrics$SHANdivers_std_Limestone <-100*(metrics$SHANdivers/2.13)
+metrics$SHANdivers_Adj_Limestone <- ifelse(metrics$SHANdivers_std_Limestone>100,100,metrics$SHANdivers_std_Limestone*1)
+
+metrics$PTV710_PCT_std_Limestone <- 100*((100-metrics$PTV710_PCT)/(100-1.5))
+metrics$PTV710_PCT_Adj_Limestone <- ifelse(metrics$PTV710_PCT_std_Limestone>100,100,metrics$PTV710_PCT_std_Limestone*1)
+
+#Calcuate
+metrics$LimestoneIBI <- ((metrics$TAXARICH_Adj_Limestone + metrics$EPT_RICH_Adj_Limestone  + metrics$PTVbeck4_Adj_Limestone +
+                            metrics$HBI_Adj_Limestone + metrics$SHANdivers_Adj_Limestone + metrics$PTV710_PCT_Adj_Limestone)/6)
+
+mystations_scores <- subset(metrics, select = c('STR_STATION_ID', 'INT_MI_SURVEY_GEN_ID', 'SmallFreestoneIBI', 
+                                                'LargeFreestoneIBI', 'SummerSWMMI', 'FallSWMMI', 'MultihabitatIBI', 'LimestoneIBI'))
+
+write.csv(mystations_scores, file = "data/mystations_scores.csv", 
+          row.names = FALSE)
+
