@@ -1,0 +1,124 @@
+---
+title: "Assessing Macroinvertebrate Diversity Across the Susquehanna River Basin"
+author: "Jacquelyn Molloseau"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview
+
+This project includes aquatic macroinvertebrate data collected from 
+50 streams throughout the Susquehanna River Basin in April 2026, which are used to generate indices of biotic integrity (IBI) scores. IBI scores are used to judge the overall health of a stream and whether human activity is disrupting it.The goal of this project is to explore this data set and determine the structure of biodiversity throughout the river basin and how it relates to IBI scores.
+
+# Research Questions
+
+1. Do beta diversity metrics change when analyzing at the genus vs. family level?
+2. How does diversity relate to IBI scores?
+3. Are sites with similar IBI scores also similar in taxa composition?
+
+# Rationale
+
+This data is one part of the dataset that I will be working with for the second chapter of my PhD dissertation. In preparation for the more extensive analysis I will conduct later, I would like to familiarize myself with this data and how community composition is structured throughout the Susquehanna River Basin. I would also like to investigate what factors seem to be most impactful with IBI scores.
+
+# Project Organization
+
+
+```
+SRBC_eDNA_work/
+├── final-project.Rmd
+├── README.md
+├── datD/
+│   ├── raw/
+│   └── processed/
+├── scripts
+|------Figures/
+   
+```
+
+| Folder or file | What it holds |
+|----------------|---------------|
+| `final-project.Rmd` | This report. |
+| `README.md` | A short description of the project. |
+| `data/raw/` | The original data files, exactly as downloaded. These are never edited. |
+| `data/processed/` | Cleaned data, and the tables built by the scripts. |
+| `scripts/` | The R scripts that process the data. |
+| `figures/` | Figures produced by the scripts. |
+
+
+The project is stored in a GitHub repository: 
+<https://github.com/jmolloseau/SRBC_eDNA>
+
+# Raw Data
+
+The raw data was provided by the Susquehanna River Basin Commission. There is a single excel file that contains all of the data provided by them as well as several other files that are subsets of the main file. There is also a file with site information.
+
+These are the files currently in `data/raw/`:
+
+```{r raw-file-list}
+raw_files <- list.files("data/raw", full.names = TRUE)
+knitr::kable(data.frame(file = basename(raw_files),
+                        size_kb = round(file.size(raw_files) / 1024, 1)))
+```
+
+## File 1: site_data.csv
+
+- Source: Data was produced by the Susquehanna River Basin Commission
+- Date accessed: September 1st, 2026
+- License or terms of use: This data is public domain
+- Citation: Reference Susquehanna River Basin Commission
+
+This file contains data on each site, including the IBI score calculated from the taxa collected there. Each row represents one site.
+
+```{r read-file-1}
+file1 <- read.csv("data/raw/site_data.csv", stringsAsFactors = FALSE, na.strings = "")
+```
+
+This file has `r nrow(file1)` rows and `r ncol(file1)` columns. Here are the first few rows:
+
+```{r head-file-1}
+knitr::kable(head(file1))
+```
+
+And here is the type of each column, as R reads it:
+
+```{r str-file-1}
+str(file1)
+```
+
+### Data dictionary for file 1
+
+| Variable | Description | Type | Units |
+|----------|-------------|------|-------|
+| `column_name_1` | *What it measures.* | *Text, whole number, decimal, or date.* | *For example, mg/L, or none.* |
+| `column_name_2` | *What it measures.* | *Text, whole number, decimal, or date.* | *For example, mg/L, or none.* |
+
+# Planned Workflow
+
+## Data cleaning
+
+Currently the data is not at all structured how I would like it to be, which is why I have not filled out the data dictionary and listed the other files. I will need to completely restructure the data so that there is a site data file that includes site name, waterbody, IBI score, and other related information as well as a file that contains all of the taxonomic information and counts for each taxa found  at each site.
+
+## Visualization
+
+I will make several figures such as bar graphs and cluster diagrams to represent the variation in the data as well as how the sites relate to each other.
+
+## Analysis
+
+IBI scores will be used as a variable to compare community composition throughout the basin. I will calculate beta diversity metrics throughout the basin as well as ordination to determine if the sites cluster together, and if this clustering is by IBI score.
+
+# References
+
+Susquehanna River Basin Commission.
+
+# Session Information
+
+```{r session-info}
+sessionInfo()
+```
