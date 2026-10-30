@@ -9,7 +9,10 @@ is just data that has been supplied by the Susquehanna River Basin Commission.
 Eventually, it will also include data from eDNA sampling and metabarcoding to compare the two methods 
 of assessing community assemblage and generating IBI scores.
 
-Folder structure: All data for this project is within the Data folder. This folder 
+Project structure: 
+The report is published at <https://jmolloseau.github.io/SRBC_eDNA/>
+
+All data for this project is within the Data folder. This folder 
 contains two separate folders, one for raw data and another for processed data. 
 All original files are kept in the raw data folder, while any data that has been altered
 or reorganized will be in the processed folder. The scripts folder contains all 

@@ -29,6 +29,7 @@ This data is one part of the dataset that I will be working with for the second 
 
 # Project Organization
 
+The report is published at <https://jmolloseau.github.io/SRBC_eDNA/>
 
 ```
 final-project/
