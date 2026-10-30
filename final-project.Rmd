@@ -80,7 +80,7 @@ knitr::kable(data.frame(file = basename(raw_files),
 This file contains data on each site, including the IBI score calculated from the taxa collected there. Each row represents one site.
 
 ```{r read-file-1}
-file1 <- read.csv("data/raw/site_data.csv", stringsAsFactors = FALSE, na.strings = "")
+file1 <- read.csv("Data/Raw/site_data.csv", stringsAsFactors = FALSE, na.strings = "")
 ```
 
 This file has `r nrow(file1)` rows and `r ncol(file1)` columns. Here are the first few rows:
@@ -114,7 +114,7 @@ All other columns can be ignored because they will be removed during the data cl
 
 This file contains all of the taxonomic information and counts of macroinvertebrates found at each site. Each row represents a taxon found at a site.
 ```{r read-file-2}
-file2 <- read.csv("data/raw/taxa_data.csv", stringsAsFactors = FALSE, na.strings = "")
+file2 <- read.csv("Data/Raw/taxa_data.csv", stringsAsFactors = FALSE, na.strings = "")
 ```
 
 This file has `r nrow(file2)` rows and `r ncol(file2)` columns. Here are the first few rows:
