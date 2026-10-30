@@ -11,7 +11,7 @@
 
 <meta name="author" content="Jacquelyn Molloseau" />
 
-<meta name="date" content="2026-10-19" />
+<meta name="date" content="2026-10-30" />
 
 <title>Assessing Macroinvertebrate Diversity Across the Susquehanna River Basin</title>
 
@@ -353,7 +353,7 @@ display: none;
 <h1 class="title toc-ignore">Assessing Macroinvertebrate Diversity
 Across the Susquehanna River Basin</h1>
 <h4 class="author">Jacquelyn Molloseau</h4>
-<h4 class="date">2026-10-19</h4>
+<h4 class="date">2026-10-30</h4>
 
 </div>
 
@@ -368,6 +368,8 @@ Questions</a></li>
 <ul>
 <li><a href="#file-1-site_data.csv" id="toc-file-1-site_data.csv">File
 1: site_data.csv</a></li>
+<li><a href="#file-2-taxa_data.csv" id="toc-file-2-taxa_data.csv">File
+2: taxa_data.csv</a></li>
 </ul></li>
 <li><a href="#planned-workflow" id="toc-planned-workflow">Planned
 Workflow</a>
@@ -390,7 +392,7 @@ Information</a></li>
 are used to generate indices of biotic integrity (IBI) scores. IBI
 scores are used to judge the overall health of a stream and whether
 human activity is disrupting it.The goal of this project is to explore
-this data set and determine the structure of biodiversity throughout the
+this dataset and determine the structure of biodiversity throughout the
 river basin and how it relates to IBI scores.</p>
 </div>
 <div id="research-questions" class="section level1">
@@ -414,14 +416,16 @@ what factors seem to be most impactful with IBI scores.</p>
 </div>
 <div id="project-organization" class="section level1">
 <h1>Project Organization</h1>
-<pre><code>SRBC_eDNA_work/
+<pre><code>final-project/
 ├── final-project.Rmd
 ├── README.md
-├── datD/
+├── data/
 │   ├── raw/
 │   └── processed/
-├── scripts
-|------Figures/
+├── scripts/
+└── output/
+    └── figures/
+    └── tables/
    </code></pre>
 <table>
 <colgroup>
@@ -450,15 +454,19 @@ edited.</td>
 </tr>
 <tr class="even">
 <td><code>data/processed/</code></td>
-<td>Cleaned data, and the tables built by the scripts.</td>
+<td>Data that has been cleaned by the scripts.</td>
 </tr>
 <tr class="odd">
 <td><code>scripts/</code></td>
 <td>The R scripts that process the data.</td>
 </tr>
 <tr class="even">
-<td><code>figures/</code></td>
+<td><code>output/figures/</code></td>
 <td>Figures produced by the scripts.</td>
+</tr>
+<tr class="odd">
+<td><code>output/tables/</code></td>
+<td>Tables produced by the scripts</td>
 </tr>
 </tbody>
 </table>
@@ -527,7 +535,7 @@ knitr::kable(data.frame(file = basename(raw_files),
 Commission</li>
 <li>Date accessed: September 1st, 2026</li>
 <li>License or terms of use: This data is public domain</li>
-<li>Citation: Reference Susquehanna River Basin Commission</li>
+<li>Citation: Susquehanna River Basin Commission (2026)</li>
 </ul>
 <p>This file contains data on each site, including the IBI score
 calculated from the taxa collected there. Each row represents one
@@ -632,8 +640,8 @@ site.</p>
 ##  $ FallSWMMI           : num  35.7 67.7 31.1 58.3 37.8 ...
 ##  $ MultihabitatIBI     : num  64.9 86.5 63.6 87 67.2 ...
 ##  $ LimestoneIBI        : num  89.9 96.3 94.1 96.1 96 ...</code></pre>
-<div id="data-dictionary-for-file-1" class="section level3">
-<h3>Data dictionary for file 1</h3>
+<div id="data-dictionary-for-site_data.csv" class="section level3">
+<h3>Data dictionary for site_data.csv</h3>
 <table style="width:100%;">
 <colgroup>
 <col width="27%" />
@@ -651,19 +659,338 @@ site.</p>
 </thead>
 <tbody>
 <tr class="odd">
-<td><code>column_name_1</code></td>
-<td><em>What it measures.</em></td>
-<td><em>Text, whole number, decimal, or date.</em></td>
-<td><em>For example, mg/L, or none.</em></td>
+<td><code>str_station</code></td>
+<td>site identifier</td>
+<td>text</td>
+<td>none</td>
 </tr>
 <tr class="even">
-<td><code>column_name_2</code></td>
-<td><em>What it measures.</em></td>
-<td><em>Text, whole number, decimal, or date.</em></td>
-<td><em>For example, mg/L, or none.</em></td>
+<td><code>INT_MI_SURVEY_GEN_ID</code></td>
+<td>site number, primary key</td>
+<td>whole number</td>
+<td>none</td>
+</tr>
+<tr class="odd">
+<td><code>SmallFreestoneIBI</code></td>
+<td>indices fo biotic integrity (IBI) score calculated using benthic
+macroinvertebrate data, scores range from 0-100</td>
+<td>number</td>
+<td>none</td>
 </tr>
 </tbody>
 </table>
+<p>All other columns can be ignored because they will be removed during
+the data cleaning process.</p>
+</div>
+</div>
+<div id="file-2-taxa_data.csv" class="section level2">
+<h2>File 2: taxa_data.csv</h2>
+<ul>
+<li>Source: Data was produced by the Susquehanna River Basin
+Commission</li>
+<li>Date accessed: September 1st, 2026</li>
+<li>License or terms of use: This data is public domain</li>
+<li>Citation: Susquehanna River Basin Commission (2026)</li>
+</ul>
+<p>This file contains all of the taxonomic information and counts of
+macroinvertebrates found at each site. Each row represents a taxon found
+at a site.</p>
+<pre class="r"><code>file2 &lt;- read.csv(&quot;data/raw/taxa_data.csv&quot;, stringsAsFactors = FALSE, na.strings = &quot;&quot;)</code></pre>
+<p>This file has 1417 rows and 19 columns. Here are the first few
+rows:</p>
+<pre class="r"><code>knitr::kable(head(file2))</code></pre>
+<table style="width:100%;">
+<colgroup>
+<col width="5%" />
+<col width="5%" />
+<col width="4%" />
+<col width="10%" />
+<col width="4%" />
+<col width="6%" />
+<col width="7%" />
+<col width="6%" />
+<col width="4%" />
+<col width="2%" />
+<col width="4%" />
+<col width="3%" />
+<col width="3%" />
+<col width="4%" />
+<col width="3%" />
+<col width="5%" />
+<col width="6%" />
+<col width="6%" />
+<col width="4%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">CE_Lab_Sam_ID</th>
+<th align="left">Field_Samp_ID</th>
+<th align="left">Station_ID</th>
+<th align="left">Waterbody</th>
+<th align="left">Coll.Date</th>
+<th align="left">Fraction.Sorted</th>
+<th align="left">Final.ID</th>
+<th align="left">PA_TAXON_NAME</th>
+<th align="left">Life.Stage</th>
+<th align="right">Count</th>
+<th align="left">Not.Unique</th>
+<th align="left">Damaged</th>
+<th align="left">Comments</th>
+<th align="left">Phylum</th>
+<th align="left">Class</th>
+<th align="left">Order</th>
+<th align="left">Family</th>
+<th align="right">PA_HILS_ID_LEVEL</th>
+<th align="left">PA_TROPHIC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">26-109-01</td>
+<td align="left">EBOT 5.4</td>
+<td align="left">EBOT 5.4</td>
+<td align="left">East Branch Octoraro Creek</td>
+<td align="left">14-Apr-26</td>
+<td align="left">6/28 of 4/28</td>
+<td align="left">Antocha sp.</td>
+<td align="left">Antocha</td>
+<td align="left">Larva</td>
+<td align="right">3</td>
+<td align="left">FALSE</td>
+<td align="left">FALSE</td>
+<td align="left">NA</td>
+<td align="left">Arthropoda</td>
+<td align="left">Insecta</td>
+<td align="left">Diptera</td>
+<td align="left">Limoniidae</td>
+<td align="right">3</td>
+<td align="left">CG</td>
+</tr>
+<tr class="even">
+<td align="left">26-109-01</td>
+<td align="left">EBOT 5.4</td>
+<td align="left">EBOT 5.4</td>
+<td align="left">East Branch Octoraro Creek</td>
+<td align="left">14-Apr-26</td>
+<td align="left">6/28 of 4/28</td>
+<td align="left">Argia sp.</td>
+<td align="left">Argia</td>
+<td align="left">Larva</td>
+<td align="right">1</td>
+<td align="left">FALSE</td>
+<td align="left">FALSE</td>
+<td align="left">NA</td>
+<td align="left">Arthropoda</td>
+<td align="left">Insecta</td>
+<td align="left">Odonata</td>
+<td align="left">Coenagrionidae</td>
+<td align="right">6</td>
+<td align="left">PR</td>
+</tr>
+<tr class="odd">
+<td align="left">26-109-01</td>
+<td align="left">EBOT 5.4</td>
+<td align="left">EBOT 5.4</td>
+<td align="left">East Branch Octoraro Creek</td>
+<td align="left">14-Apr-26</td>
+<td align="left">6/28 of 4/28</td>
+<td align="left">Baetis sp.</td>
+<td align="left">Baetis</td>
+<td align="left">Larva</td>
+<td align="right">10</td>
+<td align="left">FALSE</td>
+<td align="left">FALSE</td>
+<td align="left">NA</td>
+<td align="left">Arthropoda</td>
+<td align="left">Insecta</td>
+<td align="left">Ephemeroptera</td>
+<td align="left">Baetidae</td>
+<td align="right">6</td>
+<td align="left">CG</td>
+</tr>
+<tr class="even">
+<td align="left">26-109-01</td>
+<td align="left">EBOT 5.4</td>
+<td align="left">EBOT 5.4</td>
+<td align="left">East Branch Octoraro Creek</td>
+<td align="left">14-Apr-26</td>
+<td align="left">6/28 of 4/28</td>
+<td align="left">Caenis sp.</td>
+<td align="left">Caenis</td>
+<td align="left">Larva</td>
+<td align="right">4</td>
+<td align="left">FALSE</td>
+<td align="left">FALSE</td>
+<td align="left">NA</td>
+<td align="left">Arthropoda</td>
+<td align="left">Insecta</td>
+<td align="left">Ephemeroptera</td>
+<td align="left">Caenidae</td>
+<td align="right">7</td>
+<td align="left">CG</td>
+</tr>
+<tr class="odd">
+<td align="left">26-109-01</td>
+<td align="left">EBOT 5.4</td>
+<td align="left">EBOT 5.4</td>
+<td align="left">East Branch Octoraro Creek</td>
+<td align="left">14-Apr-26</td>
+<td align="left">6/28 of 4/28</td>
+<td align="left">Cheumatopsyche sp.</td>
+<td align="left">Cheumatopsyche</td>
+<td align="left">Larva</td>
+<td align="right">2</td>
+<td align="left">FALSE</td>
+<td align="left">FALSE</td>
+<td align="left">NA</td>
+<td align="left">Arthropoda</td>
+<td align="left">Insecta</td>
+<td align="left">Trichoptera</td>
+<td align="left">Hydropsychidae</td>
+<td align="right">6</td>
+<td align="left">FC</td>
+</tr>
+<tr class="even">
+<td align="left">26-109-01</td>
+<td align="left">EBOT 5.4</td>
+<td align="left">EBOT 5.4</td>
+<td align="left">East Branch Octoraro Creek</td>
+<td align="left">14-Apr-26</td>
+<td align="left">6/28 of 4/28</td>
+<td align="left">Chironomidae</td>
+<td align="left">Chironomidae</td>
+<td align="left">Larva</td>
+<td align="right">62</td>
+<td align="left">FALSE</td>
+<td align="left">FALSE</td>
+<td align="left">NA</td>
+<td align="left">Arthropoda</td>
+<td align="left">Insecta</td>
+<td align="left">Diptera</td>
+<td align="left">Chironomidae</td>
+<td align="right">6</td>
+<td align="left">CG</td>
+</tr>
+</tbody>
+</table>
+<p>And here is the type of each column, as R reads it:</p>
+<pre class="r"><code>str(file2)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    1417 obs. of  19 variables:
+##  $ CE_Lab_Sam_ID   : chr  &quot;26-109-01&quot; &quot;26-109-01&quot; &quot;26-109-01&quot; &quot;26-109-01&quot; ...
+##  $ Field_Samp_ID   : chr  &quot;EBOT 5.4&quot; &quot;EBOT 5.4&quot; &quot;EBOT 5.4&quot; &quot;EBOT 5.4&quot; ...
+##  $ Station_ID      : chr  &quot;EBOT 5.4&quot; &quot;EBOT 5.4&quot; &quot;EBOT 5.4&quot; &quot;EBOT 5.4&quot; ...
+##  $ Waterbody       : chr  &quot;East Branch Octoraro Creek&quot; &quot;East Branch Octoraro Creek&quot; &quot;East Branch Octoraro Creek&quot; &quot;East Branch Octoraro Creek&quot; ...
+##  $ Coll.Date       : chr  &quot;14-Apr-26&quot; &quot;14-Apr-26&quot; &quot;14-Apr-26&quot; &quot;14-Apr-26&quot; ...
+##  $ Fraction.Sorted : chr  &quot;6/28 of 4/28&quot; &quot;6/28 of 4/28&quot; &quot;6/28 of 4/28&quot; &quot;6/28 of 4/28&quot; ...
+##  $ Final.ID        : chr  &quot;Antocha sp.&quot; &quot;Argia sp.&quot; &quot;Baetis sp.&quot; &quot;Caenis sp.&quot; ...
+##  $ PA_TAXON_NAME   : chr  &quot;Antocha&quot; &quot;Argia&quot; &quot;Baetis&quot; &quot;Caenis&quot; ...
+##  $ Life.Stage      : chr  &quot;Larva&quot; &quot;Larva&quot; &quot;Larva&quot; &quot;Larva&quot; ...
+##  $ Count           : int  3 1 10 4 2 62 10 2 1 2 ...
+##  $ Not.Unique      : logi  FALSE FALSE FALSE FALSE FALSE FALSE ...
+##  $ Damaged         : logi  FALSE FALSE FALSE FALSE FALSE FALSE ...
+##  $ Comments        : chr  NA NA NA NA ...
+##  $ Phylum          : chr  &quot;Arthropoda&quot; &quot;Arthropoda&quot; &quot;Arthropoda&quot; &quot;Arthropoda&quot; ...
+##  $ Class           : chr  &quot;Insecta&quot; &quot;Insecta&quot; &quot;Insecta&quot; &quot;Insecta&quot; ...
+##  $ Order           : chr  &quot;Diptera&quot; &quot;Odonata&quot; &quot;Ephemeroptera&quot; &quot;Ephemeroptera&quot; ...
+##  $ Family          : chr  &quot;Limoniidae&quot; &quot;Coenagrionidae&quot; &quot;Baetidae&quot; &quot;Caenidae&quot; ...
+##  $ PA_HILS_ID_LEVEL: int  3 6 6 7 6 6 4 3 6 5 ...
+##  $ PA_TROPHIC      : chr  &quot;CG&quot; &quot;PR&quot; &quot;CG&quot; &quot;CG&quot; ...</code></pre>
+<div id="data-dictionary-for-site_data.csv-1" class="section level3">
+<h3>Data dictionary for site_data.csv</h3>
+<table style="width:100%;">
+<colgroup>
+<col width="27%" />
+<col width="36%" />
+<col width="16%" />
+<col width="19%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Variable</th>
+<th>Description</th>
+<th>Type</th>
+<th>Units</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>station_id</code></td>
+<td>site identifier</td>
+<td>text</td>
+<td>none</td>
+</tr>
+<tr class="even">
+<td><code>waterbody</code></td>
+<td>name of the waterbody</td>
+<td>text</td>
+<td>none</td>
+</tr>
+<tr class="odd">
+<td><code>coll date</code></td>
+<td>date that the sample was collected</td>
+<td>date</td>
+<td>none</td>
+</tr>
+<tr class="even">
+<td><code>PA_TAXON_NAME</code></td>
+<td>lowest taxonomy the individuals were identified to that matches
+Pennsylvania’s official list of taxa</td>
+<td>text</td>
+<td>none</td>
+</tr>
+<tr class="odd">
+<td><code>count</code></td>
+<td>number of this taxa found in the sample</td>
+<td>whole number</td>
+<td>counts</td>
+</tr>
+<tr class="even">
+<td><code>phylum</code></td>
+<td>phylum name of taxon</td>
+<td>text</td>
+<td>none</td>
+</tr>
+<tr class="odd">
+<td><code>class</code></td>
+<td>class name of taxon</td>
+<td>text</td>
+<td>none</td>
+</tr>
+<tr class="even">
+<td><code>order</code></td>
+<td>order name of taxon</td>
+<td>text</td>
+<td>none</td>
+</tr>
+<tr class="odd">
+<td><code>family</code></td>
+<td>family name of taxon</td>
+<td>text</td>
+<td>none</td>
+</tr>
+<tr class="even">
+<td><code>genus</code></td>
+<td>genus name of taxon</td>
+<td>text</td>
+<td>none</td>
+</tr>
+<tr class="odd">
+<td><code>PA_HILS_ID_LEVEL</code></td>
+<td>pollution tolerance level, ranges from 0-10 with 0 being the lowest
+tolerance level</td>
+<td>whole number</td>
+<td>none</td>
+</tr>
+<tr class="even">
+<td><code>PA_TROPHIC</code></td>
+<td>functional feeding group codes</td>
+<td>text</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>All other columns can be ignored because they will be removed during
+the data cleaning process.</p>
 </div>
 </div>
 </div>
@@ -671,18 +998,20 @@ site.</p>
 <h1>Planned Workflow</h1>
 <div id="data-cleaning" class="section level2">
 <h2>Data cleaning</h2>
-<p>Currently the data is not at all structured how I would like it to
-be, which is why I have not filled out the data dictionary and listed
-the other files. I will need to completely restructure the data so that
-there is a site data file that includes site name, waterbody, IBI score,
-and other related information as well as a file that contains all of the
-taxonomic information and counts for each taxa found at each site.</p>
+<p>Currently the data is structured how I would like it to be, which is
+why many of the columns are not included in the data dictionaries. I
+will need to completely restructure the data so that there is a site
+data file that includes site name, waterbody, IBI score, and other
+related information as well as a file that contains all of the taxonomic
+information and counts for each taxa found at each site.</p>
 </div>
 <div id="visualization" class="section level2">
 <h2>Visualization</h2>
-<p>I will make several figures such as bar graphs and cluster diagrams
-to represent the variation in the data as well as how the sites relate
-to each other.</p>
+<p>Hierarchical clustering will be used to visually assess the
+relatedness between sites. Additionally, beta diversity will be
+visualized using bar graphs, as will characteristics such as species
+richness. Regional differences in IBI scores will also be represented by
+box plots.</p>
 </div>
 <div id="analysis" class="section level2">
 <h2>Analysis</h2>
